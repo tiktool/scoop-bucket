@@ -1,0 +1,45 @@
+name: bump
+
+on:
+  schedule:
+    - cron: "23 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  bump:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Scoop
+        shell: pwsh
+        run: |
+          Invoke-Expression "& {$(Invoke-RestMethod https://get.scoop.sh)} -RunAsAdmin"
+          "$env:USERPROFILE\scoop\shims" | Out-File -Append -Encoding utf8 $env:GITHUB_PATH
+
+      - name: Update the manifest to the latest release
+        id: bump
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          $checkver = "$env:USERPROFILE\scoop\apps\scoop\current\bin\checkver.ps1"
+          & $checkver -App mouse-keys-record-replay -Dir "$env:GITHUB_WORKSPACE\bucket" -Update
+          git diff --quiet
+          if ($LASTEXITCODE -eq 0) { 'already current'; exit 0 }
+          $version = (Get-Content bucket\mouse-keys-record-replay.json -Raw | ConvertFrom-Json).version
+          git -c user.name=TikTool -c user.email=271127222+tiktooldev@users.noreply.github.com commit -am "mouse-keys-record-replay: Update to version $version"
+          git push
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          "changed=true" | Out-File -Append -Encoding utf8 $env:GITHUB_OUTPUT
+
+      - name: Test the new version
+        if: steps.bump.outputs.changed == 'true'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run test.yml --ref main

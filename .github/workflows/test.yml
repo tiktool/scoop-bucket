@@ -1,0 +1,44 @@
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  install:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Scoop
+        shell: pwsh
+        run: |
+          Invoke-Expression "& {$(Invoke-RestMethod https://get.scoop.sh)} -RunAsAdmin"
+          "$env:USERPROFILE\scoop\shims" | Out-File -Append -Encoding utf8 $env:GITHUB_PATH
+
+      - name: Add this bucket and install (the app is never launched)
+        shell: pwsh
+        run: |
+          scoop bucket add tiktool "$env:GITHUB_WORKSPACE"
+          scoop install tiktool/mouse-keys-record-replay
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+
+      - name: Check the installed files
+        shell: pwsh
+        run: |
+          $app = "$env:USERPROFILE\scoop\apps\mouse-keys-record-replay\current"
+          $exe = Join-Path $app 'mouse-keys-record-replay.exe'
+          if (-not (Test-Path $exe)) { throw "missing $exe" }
+          if (-not (Test-Path "$env:USERPROFILE\scoop\shims\mouse-keys-record-replay.exe")) { throw 'missing shim' }
+          $lnk = Get-ChildItem "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Scoop Apps" -Filter 'Mouse Keys Record Replay.lnk'
+          if (-not $lnk) { throw 'missing Start Menu shortcut' }
+          $manifest = Get-Content bucket\mouse-keys-record-replay.json -Raw | ConvertFrom-Json
+          $hash = (Get-FileHash $exe -Algorithm SHA256).Hash.ToLower()
+          if ($hash -ne $manifest.architecture.'64bit'.hash) { throw "hash $hash does not match the manifest" }
+          "installed $($manifest.version), sha256 $hash"
+
+      - name: Uninstall
+        shell: pwsh
+        run: scoop uninstall mouse-keys-record-replay
