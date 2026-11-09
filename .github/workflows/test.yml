@@ -21,7 +21,8 @@ jobs:
       - name: Add this bucket and install (the app is never launched)
         shell: pwsh
         run: |
-          scoop bucket add tiktool "$env:GITHUB_WORKSPACE"
+          Copy-Item -Recurse "$env:GITHUB_WORKSPACE" "$env:USERPROFILE\scoop\buckets\tiktool"
+          scoop bucket list
           scoop install tiktool/mouse-keys-record-replay
           if ($LASTEXITCODE -ne 0) { exit 1 }
 
