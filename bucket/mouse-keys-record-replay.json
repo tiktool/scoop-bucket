@@ -1,12 +1,12 @@
 {
-    "version": "0.1.4",
+    "version": "0.1.5",
     "description": "Record mouse and keyboard input with one shortcut and replay it once or on a loop.",
     "homepage": "https://mouserec.com",
     "license": "MIT",
     "architecture": {
         "64bit": {
-            "url": "https://github.com/tiktool/mouse-keys-record-replay/releases/download/v0.1.4/mouse-keys-record-replay-windows-x64.exe#/mouse-keys-record-replay.exe",
-            "hash": "0f3cdac6778ae234ebae495d435827f904a66c5ac3a58f94e76207dc420c0a1e"
+            "url": "https://github.com/tiktool/mouse-keys-record-replay/releases/download/v0.1.5/mouse-keys-record-replay-windows-x64.exe#/mouse-keys-record-replay.exe",
+            "hash": "761b869ef2da89b72d74c89dad7993d6c70d6d46fcc8100fa1376a260faee508"
         }
     },
     "bin": "mouse-keys-record-replay.exe",
